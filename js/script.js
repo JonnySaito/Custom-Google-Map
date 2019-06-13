@@ -131,7 +131,7 @@ function initMap(){
         {
             featureType: 'poi.park',
             elementType: 'geometry',
-            stylers: [{color: '#61c454'}]
+            stylers: [{color: '#abf46b'}]
         },
         {
             featureType: 'poi.park',
@@ -142,7 +142,7 @@ function initMap(){
             featureType: 'landscape.man_made',
             elementType: 'geometry.fill',
             stylers: [
-                {color: '#ffbb00'}
+                {color: '#f7b93d'}
               ]
         },
         {
@@ -182,7 +182,7 @@ function initMap(){
         }
         infobox = new google.maps.InfoWindow();
         google.maps.event.addListener(singleMarker, 'click', function(){
-            console.log('Position is ' + singleMarker.position);
+            // console.log('Position is ' + singleMarker.position);
             infobox.setContent('<div><h3>'+singleMarker.markerTitle+'</h3></div>');
             infobox.open(map, singleMarker);
 
@@ -201,16 +201,67 @@ function initMap(){
             $('#sun').text(markerSingle['openingHours']['sunday']);
 
 
-            if(markerSingle.icon === 'images/redmarker.png'){
-                markerSingle.setIcon('images/bluemarker.png');
-                markerSingle = firstMarker;
-                console.log(firstMarker.icon);
+
+            if(firstMarker){
+                // console.log(firstMarker);
+                // console.log('first marker has a value');
+                if(secondMarker){
+                    firstMarker.setIcon('images/redmarker.png');
+                    secondMarker.setIcon('images/redmarker.png');
+                    secondMarker = null;
+                    firstMarker = singleMarker;
+                    singleMarker.setIcon('images/bluemarker.png');
+                    if(directionsDisplay){
+                        directionsDisplay.setMap(null);
+                    };
+
+                } else{
+                    // console.log('We are now setting the second marker');
+                    secondMarker = singleMarker;
+                    singleMarker.setIcon('images/bluemarker.png');
+                    getDirections();
+                }
+            } else{
+                firstMarker = singleMarker;
+                singleMarker.setIcon('images/bluemarker.png');
+                // console.log('we have now set first marker');
             }
-
-            singleMarker.setIcon('images/bluemarker.png');
-
+            // console.log('marker 1 location is ' + firstMarker.position);
+            // console.log('marker 2 location is ' + secondMarker.position);
         });
+        // END OF CLICK EVENT
     };
+
+    var directionsDisplay;
+    function getDirections(){
+        // console.log('show me the directions');
+        var directionsService = new google.maps.DirectionsService();
+        directionsDisplay = new google.maps.DirectionsRenderer();
+
+        directionsDisplay.setMap(map);
+
+        directionsService.route({
+            origin: firstMarker.position,
+            destination: secondMarker.position,
+            travelMode: 'DRIVING'
+        }, function(response, status){
+            if(status == 'OK'){
+                // console.log(response.routes[0].legs);
+                for (var i = 0; i < response.routes[0].legs.length; i++) {
+                    console.log(response.routes[0].legs[i].distance.text);
+                    console.log(response.routes[0].legs[i].duration.text);
+                }
+                directionsDisplay.setDirections(response);
+
+
+            } else if(status == 'NOT_FOUND'){
+                console.log('either your origin or destination is invalid');
+            } else if(status == 'ZERO_RESULTS'){
+                alert('sorry there is no routes available');
+            }
+        })
+
+    }
 };
 
 google.maps.event.addDomListener(window, 'load', initMap);
